@@ -1,0 +1,21 @@
+http:
+  host: localhost
+  port: 8000
+  maxHeaderBytes: 1
+  readTimeout: 10s
+  writeTimeout: 10s
+
+cache:
+  ttl: 60s
+
+auth:
+  accessTokenTTL: 2h
+  refreshTokenTTL: 720h
+  verificationCodeLength: 6
+
+pg:
+  host: localhost
+  port: 5432
+  user: postgres
+  dbname: postgres
+  sslmode: false

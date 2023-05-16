@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    volumes:
+      - ./configs:/core/configs
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./.databases/postgres:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_DB: "devdb"
+      POSTGRES_USER: "pguser"
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: "/var/lib/postgresql/data/pgdata"
