@@ -9,9 +9,11 @@ cache:
   ttl: 60s
 
 auth:
-  accessTokenTTL: 2h
-  refreshTokenTTL: 720h
+  jwt:
+    accessTTL: 300s
+    refreshTTL: 60h
   verificationCodeLength: 6
+
 
 pg:
   host: localhost

@@ -2,9 +2,9 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	v1 "github.com/shamank/edutour_auth_service/app/internal/controller/http/v1"
-	"github.com/shamank/edutour_auth_service/app/internal/service"
-	"github.com/shamank/edutour_auth_service/app/pkg/auth"
+	v1 "github.com/shamank/eduTour-backend/app/internal/controller/http/v1"
+	"github.com/shamank/eduTour-backend/app/internal/service"
+	"github.com/shamank/eduTour-backend/app/pkg/auth"
 )
 
 type Handler struct {

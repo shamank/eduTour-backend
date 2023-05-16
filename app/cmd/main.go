@@ -1,6 +1,6 @@
 package main
 
-import "github.com/shamank/edutour_auth_service/app/internal/app"
+import "github.com/shamank/eduTour-backend/app/internal/app"
 
 const (
 	configDir = "./configs"

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	"github.com/shamank/edutour_auth_service/app/config"
-	handler "github.com/shamank/edutour_auth_service/app/internal/controller/http"
-	"github.com/shamank/edutour_auth_service/app/internal/repository"
-	"github.com/shamank/edutour_auth_service/app/internal/service"
-	"github.com/shamank/edutour_auth_service/app/pkg/auth"
-	"github.com/shamank/edutour_auth_service/app/server"
+	_ "github.com/lib/pq"
+	"github.com/shamank/eduTour-backend/app/config"
+	handler "github.com/shamank/eduTour-backend/app/internal/controller/http"
+	"github.com/shamank/eduTour-backend/app/internal/repository"
+	"github.com/shamank/eduTour-backend/app/internal/service"
+	"github.com/shamank/eduTour-backend/app/pkg/auth"
+	"github.com/shamank/eduTour-backend/app/server"
 	"github.com/sirupsen/logrus"
 	"log"
 	"os"
@@ -22,8 +23,7 @@ func Run(configDir string) {
 
 	cfg, err := config.Init(configDir)
 	if err != nil {
-		//logger....
-		return
+		logrus.Fatalf("error occured init config: %s", err.Error())
 	}
 
 	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",

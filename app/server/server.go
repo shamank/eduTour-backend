@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"github.com/shamank/edutour_auth_service/app/config"
+	"github.com/shamank/eduTour-backend/app/config"
 	"net/http"
 )
 

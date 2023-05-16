@@ -1,6 +1,6 @@
 package service
 
-import "github.com/shamank/edutour_auth_service/app/internal/repository"
+import "github.com/shamank/eduTour-backend/app/internal/repository"
 
 type Services struct {
 }

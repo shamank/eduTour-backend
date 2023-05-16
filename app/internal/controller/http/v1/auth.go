@@ -2,7 +2,7 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/shamank/edutour_auth_service/app/internal/domain"
+	"github.com/shamank/eduTour-backend/app/internal/domain"
 	"net/http"
 )
 
