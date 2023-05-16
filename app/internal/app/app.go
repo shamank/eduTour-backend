@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/patrickmn/go-cache"
 	"github.com/shamank/eduTour-backend/app/config"
-	handler "github.com/shamank/eduTour-backend/app/internal/controller/http"
+	handler "github.com/shamank/eduTour-backend/app/internal/delivery/http"
 	"github.com/shamank/eduTour-backend/app/internal/repository"
 	"github.com/shamank/eduTour-backend/app/internal/service"
 	"github.com/shamank/eduTour-backend/app/pkg/auth"
+	"github.com/shamank/eduTour-backend/app/pkg/hash"
 	"github.com/shamank/eduTour-backend/app/server"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -33,12 +35,16 @@ func Run(configDir string) {
 	}
 
 	repos := repository.NewRepository(db)
-	services := service.NewServices(repos)
+
+	memcache := cache.New(5*time.Minute, 10*time.Minute)
 
 	tokenManager, err := auth.NewManager(cfg.AuthConfig.JWT.SignedKey)
 	if err != nil {
 		log.Fatalf("error occured generate tokenManager: %s", err.Error())
 	}
+	hasher := hash.NewSHA1Hasher(cfg.AuthConfig.PasswordSalt)
+
+	services := service.NewServices(repos, memcache, hasher, tokenManager)
 
 	handlers := handler.NewHandler(services, tokenManager)
 

@@ -37,6 +37,7 @@ func (m *Manager) Generate(userID string, roleID string, ttl time.Duration) (str
 	if err != nil {
 		return "", fmt.Errorf("error with sign token: %s", err.Error())
 	}
+
 	return tokenString, nil
 }
 

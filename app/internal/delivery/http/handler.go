@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	v1 "github.com/shamank/eduTour-backend/app/internal/controller/http/v1"
+	v1 "github.com/shamank/eduTour-backend/app/internal/delivery/http/v1"
 	"github.com/shamank/eduTour-backend/app/internal/service"
 	"github.com/shamank/eduTour-backend/app/pkg/auth"
 )
