@@ -82,7 +82,7 @@ func Init(configDir string) (*Config, error) {
 			User:     viper.GetString("pg.user"),
 			Password: os.Getenv("DB_PASSWORD"),
 			DBName:   viper.GetString("pg.dbname"),
-			SSLMode:  viper.GetString("sslmode"),
+			SSLMode:  viper.GetString("pg.sslmode"),
 		},
 		AuthConfig: AuthConfig{
 			JWT: JWTConfig{

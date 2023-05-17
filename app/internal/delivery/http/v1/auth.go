@@ -7,9 +7,9 @@ import (
 )
 
 type userSignUpInput struct {
-	Name     string `json:"name" validate:"required,min=2,max=64"`
-	Email    string `json:"email" validate:"required,email,max=64"`
-	Phone    string `json:"phone" validate:"required,phone,max=13"`
+	Name  string `json:"name" validate:"required,min=2,max=64"`
+	Email string `json:"email" validate:"required,email,max=64"`
+	//Phone    string `json:"phone" validate:"required,phone,max=13"`
 	Password string `json:"password" validate:"required,min=8,max=64"`
 }
 
@@ -39,6 +39,14 @@ func (h *Handler) signUp(c *gin.Context) {
 	var input userSignUpInput
 	if err := c.BindJSON(&input); err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := h.services.Users.SignUp(c.Request.Context(), service.UserSignUpInput{
+		Email:    input.Email,
+		Name:     input.Name,
+		Password: input.Password,
+	}); err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.JSON(http.StatusOK, map[string]interface{}{
@@ -83,7 +91,7 @@ func (h *Handler) userRefresh(c *gin.Context) {
 		return
 	}
 
-	res, err := h.services.Users.RefreshTokens(c.Request.Context(), input.RefreshToken)
+	res, err := h.services.Users.RefreshToken(c.Request.Context(), input.RefreshToken)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 	}

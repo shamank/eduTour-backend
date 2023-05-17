@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/rogpeppe/go-internal/cache"
+	"github.com/patrickmn/go-cache"
 	"github.com/shamank/eduTour-backend/app/internal/domain"
 	"github.com/shamank/eduTour-backend/app/internal/repository"
 	"github.com/shamank/eduTour-backend/app/pkg/auth"
@@ -33,7 +33,7 @@ type Users interface {
 	SignIn(ctx context.Context, input UserSignInInput) (Tokens, error)
 	RefreshToken(ctx context.Context, refreshToken string) (Tokens, error)
 	Verify(ctx context.Context, userID int, hash string) error
-	SetRefreshToken(ctx context.Context, userID int) error
+	setRefreshToken(ctx context.Context, userID int, userRole string) (Tokens, error)
 }
 
 type EventInput struct {

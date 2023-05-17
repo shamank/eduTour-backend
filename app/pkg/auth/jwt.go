@@ -10,7 +10,7 @@ import (
 )
 
 type TokenManager interface {
-	Generate(userID string, roleID string, ttl time.Duration) (string, error)
+	Generate(userID int, roleID string) (string, time.Duration, error)
 	Parse(token string) (string, string, error)
 	GenerateRefreshToken() (string, int64, error)
 }
@@ -33,7 +33,7 @@ func NewManager(signedKey string, accessTokenTTL time.Duration, refreshTokenTTL 
 	}, nil
 }
 
-func (m *Manager) Generate(userID string, roleID string) (string, error) {
+func (m *Manager) Generate(userID int, roleID string) (string, time.Duration, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":   userID,
 		"user_role": roleID,
@@ -41,10 +41,10 @@ func (m *Manager) Generate(userID string, roleID string) (string, error) {
 	})
 	tokenString, err := token.SignedString([]byte(m.signedKey))
 	if err != nil {
-		return "", fmt.Errorf("error with sign token: %s", err.Error())
+		return "", 0, fmt.Errorf("error with sign token: %s", err.Error())
 	}
 
-	return tokenString, nil
+	return tokenString, m.accessTokenTTL, nil
 }
 
 func (m *Manager) Parse(tokenString string) (string, string, error) {
