@@ -7,5 +7,5 @@ type RefreshTokenOutput struct {
 
 type RefreshTokenInput struct {
 	RefreshToken string `json:"refresh_token"`
-	ExpiresAt    string `json:"expires_at"`
+	ExpiresAt    int64  `json:"expires_at"`
 }

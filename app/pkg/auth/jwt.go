@@ -12,26 +12,32 @@ import (
 type TokenManager interface {
 	Generate(userID string, roleID string, ttl time.Duration) (string, error)
 	Parse(token string) (string, string, error)
-	GenerateRefreshToken() (string, error)
+	GenerateRefreshToken() (string, int64, error)
 }
 
 type Manager struct {
-	signedKey string
+	signedKey       string
+	accessTokenTTL  time.Duration
+	refreshTokenTTL time.Duration
 }
 
-func NewManager(signedKey string) (*Manager, error) {
+func NewManager(signedKey string, accessTokenTTL time.Duration, refreshTokenTTL time.Duration) (*Manager, error) {
 	if signedKey == "" {
 		return nil, errors.New("empty signed key")
 	}
 
-	return &Manager{signedKey: signedKey}, nil
+	return &Manager{
+		signedKey:       signedKey,
+		accessTokenTTL:  accessTokenTTL,
+		refreshTokenTTL: refreshTokenTTL,
+	}, nil
 }
 
-func (m *Manager) Generate(userID string, roleID string, ttl time.Duration) (string, error) {
+func (m *Manager) Generate(userID string, roleID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":   userID,
 		"user_role": roleID,
-		"expire_at": time.Now().Add(ttl).Unix(),
+		"expire_at": time.Now().Add(m.accessTokenTTL).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(m.signedKey))
 	if err != nil {
@@ -59,14 +65,15 @@ func (m *Manager) Parse(tokenString string) (string, string, error) {
 	}
 }
 
-func (m *Manager) GenerateRefreshToken() (string, error) {
+func (m *Manager) GenerateRefreshToken() (string, int64, error) {
 	bytes := make([]byte, 32)
 	_, err := rand.Read(bytes)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	// Кодируем байты в строку
 	token := base64.StdEncoding.EncodeToString(bytes)
-	return token, nil
+	expireAt := time.Now().Add(m.refreshTokenTTL).Unix()
+	return token, expireAt, nil
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/shamank/eduTour-backend/app/internal/domain"
 	"github.com/shamank/eduTour-backend/app/internal/repository"
 	"github.com/shamank/eduTour-backend/app/pkg/auth"
 	"github.com/shamank/eduTour-backend/app/pkg/hash"
@@ -35,10 +36,12 @@ func (s *UserService) SignIn(ctx context.Context, input UserSignInInput) (Tokens
 		return Tokens{}, err
 	}
 
+	token, err := s.SetRefreshToken(ctx, user.ID)
+
 	//сделать сохранение рефреш токена в бд
 	return Tokens{}, nil
 }
-func (s *UserService) RefreshTokens(ctx context.Context, refreshToken string) (Tokens, error) {
+func (s *UserService) RefreshToken(ctx context.Context, refreshToken string) (Tokens, error) {
 
 	var tokens Tokens
 
@@ -47,4 +50,19 @@ func (s *UserService) RefreshTokens(ctx context.Context, refreshToken string) (T
 
 func (s *UserService) Verify(ctx context.Context, userID int, hash string) error {
 	return nil
+}
+
+func (s *UserService) SetRefreshToken(ctx context.Context, userID int) (string, error) {
+	token, expireAt, err := s.tokenManager.GenerateRefreshToken()
+	if err != nil {
+		return "", err
+	}
+
+	err = s.repo.SetRefreshToken(ctx, userID, domain.RefreshTokenInput{
+		RefreshToken: token,
+		ExpiresAt:    expireAt,
+	})
+
+	return token, err
+
 }

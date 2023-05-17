@@ -14,6 +14,7 @@ CREATE TABLE REFRESH_TOKENS
     user_id       int references ACCOUNTS (id) on delete cascade not null,
     refresh_token varchar(255)                                   not null,
     expire_at     TIMESTAMP,
+    black_list    bool default false                             not null,
     FOREIGN KEY (user_id) REFERENCES ACCOUNTS (id)
 );
 
@@ -31,7 +32,7 @@ CREATE TABLE EVENTS
 
 CREATE TABLE CATEGORIES
 (
-    id   serial not null unique,
+    id   serial       not null unique,
     name varchar(255) not null unique,
     slug varchar(255) not null unique
 

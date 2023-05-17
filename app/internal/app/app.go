@@ -38,7 +38,9 @@ func Run(configDir string) {
 
 	memcache := cache.New(5*time.Minute, 10*time.Minute)
 
-	tokenManager, err := auth.NewManager(cfg.AuthConfig.JWT.SignedKey)
+	JWTConfig := cfg.AuthConfig.JWT
+
+	tokenManager, err := auth.NewManager(JWTConfig.SignedKey, JWTConfig.AccessTokenTTL, JWTConfig.RefreshTokenTTL)
 	if err != nil {
 		log.Fatalf("error occured generate tokenManager: %s", err.Error())
 	}
