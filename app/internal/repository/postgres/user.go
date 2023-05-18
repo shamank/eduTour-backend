@@ -71,6 +71,36 @@ func (r *UserRepo) GetByCredentials(ctx context.Context, email string, passwordH
 
 func (r *UserRepo) GetByRefreshToken(ctx context.Context, refreshToken string) (domain.User, error) {
 	var user domain.User
+	var tokenID int
+	query := `SELECT u.id, u.username, u.email, r.id, r.name, t.id
+				FROM USERS u
+				INNER JOIN USERS_ROLES ur on u.id = ur.user_id
+				INNER JOIN ROLES r on r.id = ur.role_id
+				INNER JOIN REFRESH_TOKENS t on t.user_id = u.id
+				WHERE t.refresh_token = $1 AND t.expire_at > CURRENT_TIMESTAMP AND NOT t.black_list`
+
+	rows, err := r.db.Query(query, refreshToken)
+	if err != nil {
+		return domain.User{}, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var userRole domain.UserRole
+		rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.Email,
+			&userRole.ID,
+			&userRole.Name,
+			&tokenID)
+		user.Roles = append(user.Roles, userRole)
+	}
+
+	query2 := `UPDATE `
+	//if err := r.db.Get(&user, query, email, passwordHash); err != nil {
+	//	return domain.User{}, err
+	//}
+
 	return user, nil
 }
 

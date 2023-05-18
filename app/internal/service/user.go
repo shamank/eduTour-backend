@@ -65,9 +65,20 @@ func (s *UserService) SignIn(ctx context.Context, input UserSignInInput) (Tokens
 }
 func (s *UserService) RefreshToken(ctx context.Context, refreshToken string) (Tokens, error) {
 
-	var tokens Tokens
+	user, err := s.repo.GetByRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return Tokens{}, err
+	}
 
-	return tokens, nil
+	var userRole = "user"
+
+	for _, role := range user.Roles {
+		if role.Name == "admin" {
+			userRole = "admin"
+		}
+	}
+
+	return s.setRefreshToken(ctx, user.ID, userRole)
 }
 
 func (s *UserService) Verify(ctx context.Context, userID int, hash string) error {
