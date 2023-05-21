@@ -482,11 +482,11 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "email",
-                "password",
-                "username"
+                "password"
             ],
             "properties": {
                 "email": {
+                    "description": "UserName string ` + "`" + `json:\"username\" validate:\"required,min=2,max=64\"` + "`" + `",
                     "type": "string",
                     "maxLength": 64
                 },
@@ -495,11 +495,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 64,
                     "minLength": 8
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "minLength": 2
                 }
             }
         },
