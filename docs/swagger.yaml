@@ -48,19 +48,19 @@ definitions:
       email:
         maxLength: 64
         type: string
-      name:
-        maxLength: 64
-        minLength: 2
-        type: string
       password:
         description: Phone    string `json:"phone" validate:"required,phone,max=13"`
         maxLength: 64
         minLength: 8
         type: string
+      username:
+        maxLength: 64
+        minLength: 2
+        type: string
     required:
     - email
-    - name
     - password
+    - username
     type: object
   v1.userSignUpInput:
     properties:
@@ -83,7 +83,7 @@ definitions:
 externalDocs:
   description: OpenAPI
   url: https://swagger.io/resources/open-api/
-host: localhost:8000
+host: 92.255.78.139:8000
 info:
   contact: {}
   description: REST API for EduTour-AuthService

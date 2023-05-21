@@ -482,24 +482,24 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "email",
-                "name",
-                "password"
+                "password",
+                "username"
             ],
             "properties": {
                 "email": {
                     "type": "string",
                     "maxLength": 64
                 },
-                "name": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "minLength": 2
-                },
                 "password": {
                     "description": "Phone    string ` + "`" + `json:\"phone\" validate:\"required,phone,max=13\"` + "`" + `",
                     "type": "string",
                     "maxLength": 64,
                     "minLength": 8
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 2
                 }
             }
         },
@@ -544,7 +544,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8000",
+	Host:             "92.255.78.139:8000",
 	BasePath:         "/api/v1/",
 	Schemes:          []string{},
 	Title:            "EduTour-AuthService API",
