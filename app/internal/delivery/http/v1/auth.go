@@ -13,8 +13,8 @@ type userSignUpInput struct {
 }
 
 type userSignInInput struct {
-	UserName string `json:"username" validate:"required,min=2,max=64"`
-	Email    string `json:"email" validate:"required,email,max=64"`
+	//UserName string `json:"username" validate:"required,min=2,max=64"`
+	Email string `json:"email" validate:"required,email,max=64"`
 	//Phone    string `json:"phone" validate:"required,phone,max=13"`
 	Password string `json:"password" validate:"required,min=8,max=64"`
 }
