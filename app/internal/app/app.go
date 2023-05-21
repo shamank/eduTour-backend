@@ -25,7 +25,7 @@ import (
 // @version 1.0
 // @description REST API for EduTour-AuthService
 
-// @host localhost:8000
+// @host 92.255.78.139:8000
 // @BasePath /api/v1/
 
 // @securityDefinitions.apikey ApiKeyAuth
