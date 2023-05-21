@@ -21,6 +21,20 @@ import (
 	"time"
 )
 
+// @title EduTour-AuthService API
+// @version 1.0
+// @description REST API for EduTour-AuthService
+
+// @host localhost:8000
+// @BasePath /api/v1/
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
+
 func Run(configDir string) {
 
 	cfg, err := config.Init(configDir)

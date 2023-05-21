@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"time"
 )
 
 const (
@@ -15,38 +16,66 @@ const (
 	adminRole = "admin"
 )
 
-func (h *Handler) parseAuthHeader(c *gin.Context) (string, string, error) {
+type userContext struct {
+	userID   int
+	userName string
+	Roles    []string
+}
+
+func (h *Handler) parseAuthHeader(c *gin.Context) (userContext, error) {
 	header := c.GetHeader(AuthorizationHeader)
 	if header == "" {
-		return "", "", errors.New("auth header is empty")
+		return userContext{}, errors.New("auth header is empty")
 	}
 	headerParts := strings.Split(header, " ")
 
 	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-		return "", "", errors.New("auth header is invalid")
+		return userContext{}, errors.New("auth header is invalid")
 	}
 
 	if len(headerParts[1]) == 0 {
-		return "", "", errors.New("auth token is empty")
+		return userContext{}, errors.New("auth token is empty")
 	}
 
-	return h.tokenManager.Parse(headerParts[1])
+	res, err := h.tokenManager.Parse(headerParts[1])
+	if err != nil {
+		return userContext{}, err
+	}
+	if res.ExpireAt < time.Now().Unix() {
+		return userContext{}, errors.New("token expired")
+	}
+
+	return userContext{
+		userID:   res.UserID,
+		userName: res.UserName,
+		Roles:    res.Roles,
+	}, nil
 }
 
 func (h *Handler) userIdentity(c *gin.Context) {
-	id, role, err := h.parseAuthHeader(c)
+	usr, err := h.parseAuthHeader(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-	c.Set(userCtx, id)
-	c.Set(roleCtx, role)
+	c.Set(userCtx, usr)
 }
 
 func (h *Handler) adminOnly(c *gin.Context) {
-	role, ok := c.Get(roleCtx)
-	if !ok || role != adminRole {
-		newErrorResponse(c, http.StatusForbidden, "you are not admin")
+	if roles, ok := c.Get(roleCtx); !ok {
+		newErrorResponse(c, http.StatusForbidden, "you are not login")
 		return
+	} else {
+		flag := false
+		for _, role := range roles.([]string) {
+			if role == adminRole {
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			newErrorResponse(c, http.StatusForbidden, "you are not admin")
+			return
+		}
 	}
 }

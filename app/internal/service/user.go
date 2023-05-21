@@ -4,108 +4,50 @@ import (
 	"context"
 	"github.com/shamank/eduTour-backend/app/internal/domain"
 	"github.com/shamank/eduTour-backend/app/internal/repository"
-	"github.com/shamank/eduTour-backend/app/pkg/auth"
-	"github.com/shamank/eduTour-backend/app/pkg/hash"
 )
 
 type UserService struct {
-	repo         repository.Users
-	hasher       hash.PasswordHasher
-	tokenManager auth.TokenManager
+	repo repository.Users
 }
 
-func NewUserService(repo repository.Users, hasher hash.PasswordHasher, tokenManager auth.TokenManager) *UserService {
+func NewUserService(repo repository.Users) *UserService {
 	return &UserService{
-		repo:         repo,
-		hasher:       hasher,
-		tokenManager: tokenManager,
+		repo: repo,
 	}
 }
 
-func (s *UserService) SignUp(ctx context.Context, input UserSignUpInput) error {
-	passwordHash, err := s.hasher.Hash(input.Password)
+func (s *UserService) GetUserProfile(ctx context.Context, userName string) (UserProfile, error) {
+
+	res, err := s.repo.GetUserProfile(ctx, userName)
 	if err != nil {
-		return err
+		return UserProfile{}, err
 	}
 
-	user := domain.User{
-		Username:     input.Name,
-		Email:        input.Email,
-		PasswordHash: passwordHash,
+	userRoles := make([]string, 0)
+
+	for _, role := range res.Roles {
+		userRoles = append(userRoles, role.Name)
 	}
 
-	if err := s.repo.Create(ctx, user); err != nil {
-		return err
-	}
-
-	return nil
-}
-func (s *UserService) SignIn(ctx context.Context, input UserSignInInput) (Tokens, error) {
-	passwordHash, err := s.hasher.Hash(input.Password)
-	if err != nil {
-		return Tokens{}, err
-	}
-
-	user, err := s.repo.GetByCredentials(ctx, input.Email, passwordHash)
-	if err != nil {
-		return Tokens{}, err
-	}
-
-	//сделать сохранение рефреш токена в бд
-
-	var userRole = "user"
-
-	for _, role := range user.Roles {
-		if role.Name == "admin" {
-			userRole = "admin"
-		}
-	}
-
-	return s.setRefreshToken(ctx, user.ID, userRole)
-}
-func (s *UserService) RefreshToken(ctx context.Context, refreshToken string) (Tokens, error) {
-
-	user, err := s.repo.GetByRefreshToken(ctx, refreshToken)
-	if err != nil {
-		return Tokens{}, err
-	}
-
-	var userRole = "user"
-
-	for _, role := range user.Roles {
-		if role.Name == "admin" {
-			userRole = "admin"
-		}
-	}
-
-	return s.setRefreshToken(ctx, user.ID, userRole)
+	return UserProfile{
+		FirstName:  res.FirstName,
+		LastName:   res.LastName,
+		MiddleName: res.MiddleName,
+		Avatar:     res.Avatar,
+		Roles:      userRoles,
+	}, nil
 }
 
-func (s *UserService) Verify(ctx context.Context, userID int, hash string) error {
-	return nil
-}
-
-func (s *UserService) setRefreshToken(ctx context.Context, userID int, userRole string) (Tokens, error) {
-
-	accessToken, expireIn, err := s.tokenManager.Generate(userID, userRole)
-	if err != nil {
-		return Tokens{}, err
-	}
-
-	refreshToken, expireAt, err := s.tokenManager.GenerateRefreshToken()
-	if err != nil {
-		return Tokens{}, err
-	}
-
-	err = s.repo.SetRefreshToken(ctx, userID, domain.RefreshTokenInput{
-		RefreshToken: refreshToken,
-		ExpiresAt:    expireAt,
+func (s *UserService) UpdateUserProfile(ctx context.Context, userName string, user UserProfileInput) error {
+	err := s.repo.UpdateUserProfile(ctx, domain.User{
+		Username:   userName,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		MiddleName: user.MiddleName,
+		Avatar:     user.Avatar,
 	})
-
-	return Tokens{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpireIn:     expireIn,
-	}, err
-
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -26,7 +26,6 @@ func (h *Handler) InitAPI(api *gin.RouterGroup) {
 	v1 := api.Group("/v1")
 	{
 		h.initAuthRouter(v1)
-		h.initEventRouter(v1)
-		h.initEventCategoriesRouter(v1)
+		h.initUsersRouter(v1)
 	}
 }

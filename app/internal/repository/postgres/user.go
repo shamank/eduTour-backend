@@ -2,8 +2,10 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/shamank/eduTour-backend/app/internal/domain"
+	"strings"
 )
 
 type UserRepo struct {
@@ -11,103 +13,86 @@ type UserRepo struct {
 }
 
 func NewUserRepo(db *sqlx.DB) *UserRepo {
-	return &UserRepo{db: db}
+	return &UserRepo{
+		db: db,
+	}
 }
 
-func (r *UserRepo) Create(ctx context.Context, user domain.User) error {
+func (r *UserRepo) GetUserProfile(ctx context.Context, userName string) (domain.User, error) {
 
-	q1 := `INSERT INTO USERS (username, email, password_hash) 
-			VALUES ($1, $2, $3) RETURNING id`
-	q2 := `INSERT INTO USERS_ROLES (user_id, role_id) VALUES ($1, 0)`
-	tx, err := r.db.Begin()
-	if err != nil {
-		return err
-	}
-	var id int
-	row := tx.QueryRow(q1, user.Username, user.Email, user.PasswordHash)
-	if err := row.Scan(&id); err != nil {
-		tx.Rollback()
-		return err
-	}
-	if _, err := tx.Exec(q2, id); err != nil {
-		return err
-	}
-
-	return tx.Commit()
-}
-
-func (r *UserRepo) GetByCredentials(ctx context.Context, email string, passwordHash string) (domain.User, error) {
 	var user domain.User
 
-	query := `SELECT u.id, u.username, u.email, r.id, r.name
-				FROM USERS u
-				INNER JOIN USERS_ROLES ur on u.id = ur.user_id
-				INNER JOIN ROLES r on r.id = ur.role_id
-				WHERE u.email = $1 AND u.password_hash = $2`
+	query := `SELECT u.username, COALESCE(u.first_name, '') as first_name,
+       COALESCE(u.last_name, '') as last_name, COALESCE(u.middle_name, '') as middle_name,
+       COALESCE(u.avatar, '') as avatar, r.id, r.name
+				FROM users u
+				INNER JOIN users_roles ur on u.id = ur.user_id
+				INNER JOIN roles r on r.id = ur.role_id
+				WHERE u.username = $1`
 
-	//if err := r.db.Get(&user, query, email, passwordHash); err != nil {
-	//	return domain.User{}, err
-	//}
-	rows, err := r.db.Query(query, email, passwordHash)
+	rows, err := r.db.Query(query, userName)
 	if err != nil {
 		return domain.User{}, err
 	}
 	defer rows.Close()
 
+	found := false
+
 	for rows.Next() {
-		var roles domain.UserRole
-		rows.Scan(
-			&user.ID,
-			&user.Username,
-			&user.Email,
-			&roles.ID,
-			&roles.Name,
-		)
-		user.Roles = append(user.Roles, roles)
+		found = true
+		var role domain.UserRole
+
+		err := rows.Scan(&user.Username, &user.FirstName, &user.LastName, &user.MiddleName, &user.Avatar, &role.ID, &role.Name)
+		if err != nil {
+			return domain.User{}, err
+		}
+		user.Roles = append(user.Roles, role)
+	}
+
+	if !found {
+		return domain.User{}, domain.ErrUserNotFound
 	}
 
 	return user, nil
 }
 
-func (r *UserRepo) GetByRefreshToken(ctx context.Context, refreshToken string) (domain.User, error) {
-	var user domain.User
-	var tokenID int
-	query := `SELECT u.id, u.username, u.email, r.id, r.name, t.id
-				FROM USERS u
-				INNER JOIN USERS_ROLES ur on u.id = ur.user_id
-				INNER JOIN ROLES r on r.id = ur.role_id
-				INNER JOIN REFRESH_TOKENS t on t.user_id = u.id
-				WHERE t.refresh_token = $1 AND t.expire_at > CURRENT_TIMESTAMP AND NOT t.black_list`
+func (r *UserRepo) UpdateUserProfile(ctx context.Context, user domain.User) error {
 
-	rows, err := r.db.Query(query, refreshToken)
-	if err != nil {
-		return domain.User{}, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var userRole domain.UserRole
-		rows.Scan(
-			&user.ID,
-			&user.Username,
-			&user.Email,
-			&userRole.ID,
-			&userRole.Name,
-			&tokenID)
-		user.Roles = append(user.Roles, userRole)
+	setValues := make([]string, 0)
+	args := make([]interface{}, 0)
+	argID := 1
+
+	if user.FirstName != "" {
+		setValues = append(setValues, fmt.Sprintf("first_name=$%d", argID))
+		args = append(args, user.FirstName)
+		argID++
 	}
 
-	query2 := `UPDATE `
-	//if err := r.db.Get(&user, query, email, passwordHash); err != nil {
-	//	return domain.User{}, err
-	//}
+	if user.LastName != "" {
+		setValues = append(setValues, fmt.Sprintf("last_name=$%d", argID))
+		args = append(args, user.LastName)
+		argID++
+	}
 
-	return user, nil
-}
+	if user.MiddleName != "" {
+		setValues = append(setValues, fmt.Sprintf("middle_name=$%d", argID))
+		args = append(args, user.MiddleName)
+		argID++
+	}
 
-func (r *UserRepo) SetRefreshToken(ctx context.Context, userID int, refreshInput domain.RefreshTokenInput) error {
-	return nil
-}
+	if user.Avatar != "" {
+		setValues = append(setValues, fmt.Sprintf("avatar=$%d", argID))
+		args = append(args, user.Avatar)
+		argID++
+	}
 
-func (r *UserRepo) Verify(ctx context.Context, userID int) error {
-	return nil
+	setQuery := strings.Join(setValues, ", ")
+
+	query := fmt.Sprintf(`UPDATE users SET %s WHERE username=$%d`, setQuery, argID)
+
+	args = append(args, user.Username)
+
+	_, err := r.db.Exec(query, args...)
+
+	return err
 }

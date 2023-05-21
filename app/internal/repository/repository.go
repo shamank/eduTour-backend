@@ -12,27 +12,30 @@ type RefreshToken struct {
 	ExpiresAt    string `json:"expires_at"`
 }
 
-type Users interface {
+type Authorization interface {
 	Create(ctx context.Context, user domain.User) error
 	GetByCredentials(ctx context.Context, email string, passwordHash string) (domain.User, error)
 	GetByRefreshToken(ctx context.Context, refreshToken string) (domain.User, error)
 	SetRefreshToken(ctx context.Context, userID int, refreshInput domain.RefreshTokenInput) error
 	Verify(ctx context.Context, userID int) error
+	GetFullUserInfo(ctx context.Context, userID int) (domain.User, error)
 }
 
-type Events interface {
-	Create(ctx context.Context)
+type Users interface {
+	GetUserProfile(ctx context.Context, userName string) (domain.User, error)
+	UpdateUserProfile(ctx context.Context, user domain.User) error
 }
 
 type Repository struct {
-	db     *sqlx.DB
-	Users  Users
-	Events Events
+	db            *sqlx.DB
+	Authorization Authorization
+	Users         Users
 }
 
 func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
-		db:    db,
-		Users: postgres.NewUserRepo(db),
+		db:            db,
+		Authorization: postgres.NewAuthRepo(db),
+		Users:         postgres.NewUserRepo(db),
 	}
 }

@@ -9,9 +9,16 @@ import (
 	"time"
 )
 
+type userClaims struct {
+	UserID   int
+	UserName string
+	Roles    []string
+	ExpireAt int64
+}
+
 type TokenManager interface {
-	Generate(userID int, roleID string) (string, time.Duration, error)
-	Parse(token string) (string, string, error)
+	Generate(userID int, userName string, roles []string) (string, time.Duration, error)
+	Parse(token string) (userClaims, error)
 	GenerateRefreshToken() (string, int64, error)
 }
 
@@ -33,13 +40,15 @@ func NewManager(signedKey string, accessTokenTTL time.Duration, refreshTokenTTL 
 	}, nil
 }
 
-func (m *Manager) Generate(userID int, roleID string) (string, time.Duration, error) {
+func (m *Manager) Generate(userID int, userName string, roles []string) (string, time.Duration, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id":   userID,
-		"user_role": roleID,
-		"expire_at": time.Now().Add(m.accessTokenTTL).Unix(),
+		"user_id":    userID,
+		"user_roles": roles,
+		"user_name":  userName,
+		"expire_at":  time.Now().Add(m.accessTokenTTL).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(m.signedKey))
+
 	if err != nil {
 		return "", 0, fmt.Errorf("error with sign token: %s", err.Error())
 	}
@@ -47,22 +56,35 @@ func (m *Manager) Generate(userID int, roleID string) (string, time.Duration, er
 	return tokenString, m.accessTokenTTL, nil
 }
 
-func (m *Manager) Parse(tokenString string) (string, string, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+func (m *Manager) Parse(tokenString string) (userClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return m.signedKey, nil
+		return []byte(m.signedKey), nil
 	})
 	if err != nil {
-		return "", "", err
+		return userClaims{}, err
 	}
+
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims["user_id"].(string), claims["user_role"].(string), nil
-	} else {
-		return "", "", fmt.Errorf("cannot get claims from token")
+		roles := make([]string, len(claims["user_roles"].([]interface{})))
+		for i, v := range claims["user_roles"].([]interface{}) {
+			roles[i], ok = v.(string)
+			if !ok {
+				return userClaims{}, errors.New("error occurred parsing claims (user roles)")
+			}
+		}
+		return userClaims{
+			UserID:   int(claims["user_id"].(float64)),
+			UserName: claims["user_name"].(string),
+			Roles:    roles,
+			ExpireAt: int64(claims["expire_at"].(float64)),
+		}, nil
 	}
+	return userClaims{}, fmt.Errorf("cannot get claims from token")
+
 }
 
 func (m *Manager) GenerateRefreshToken() (string, int64, error) {

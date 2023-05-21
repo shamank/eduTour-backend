@@ -11,7 +11,7 @@ import (
 )
 
 type UserSignUpInput struct {
-	Name     string
+	UserName string
 	Email    string
 	Phone    string
 	Password string
@@ -28,56 +28,47 @@ type Tokens struct {
 	ExpireIn     time.Duration
 }
 
-type Users interface {
+type UserProfile struct {
+	UserName   string
+	FirstName  string
+	LastName   string
+	MiddleName string
+	Avatar     string
+	Roles      []string
+}
+
+type Authorization interface {
 	SignUp(ctx context.Context, input UserSignUpInput) error
 	SignIn(ctx context.Context, input UserSignInInput) (Tokens, error)
 	RefreshToken(ctx context.Context, refreshToken string) (Tokens, error)
 	Verify(ctx context.Context, userID int, hash string) error
-	setRefreshToken(ctx context.Context, userID int, userRole string) (Tokens, error)
+	setRefreshToken(ctx context.Context, userID int, userName string, userRoles []string) (Tokens, error)
+	GetFullUserInfo(ctx context.Context, userID int) (domain.User, error)
 }
 
-type EventInput struct {
-	Name        string
-	Description string
-	StartDate   time.Time
-	EndDate     time.Time
-	Categories  []EventCategoryInput
-	Cover       string
+type UserProfileInput struct {
+	FirstName  string
+	LastName   string
+	MiddleName string
+	Avatar     string
 }
 
-type Events interface {
-	GetAll(ctx context.Context) ([]domain.Event, error)
-	Create(ctx context.Context, input EventInput) (int, error)
-	GetByID(ctx context.Context, eventID int) (domain.Event, error)
-	UpdateByID(ctx context.Context, input EventInput) error
-	DeleteByID(ctx context.Context, eventID int) error
-}
-
-type EventCategoryInput struct {
-	Name        string
-	Description string
-	Slug        string
-}
-
-type EventsCategories interface {
-	Create(ctx context.Context, input EventCategoryInput) (int, error)
-	GetByID(ctx context.Context, categoryID int) (domain.EventCategory, error)
-	UpdateByID(ctx context.Context, categoryID int) error
-	DeleteByID(ctx context.Context, categoryID int) error
+type Users interface {
+	GetUserProfile(ctx context.Context, userName string) (UserProfile, error)
+	UpdateUserProfile(ctx context.Context, userName string, user UserProfileInput) error
 }
 
 type Services struct {
-	repos            *repository.Repository
-	Users            Users
-	Events           Events
-	EventsCategories EventsCategories
+	repos         *repository.Repository
+	Authorization Authorization
+	Users         Users
 }
 
 func NewServices(repos *repository.Repository, cache *cache.Cache, hasher hash.PasswordHasher, tokenManager auth.TokenManager) *Services {
 
 	return &Services{
-		repos:  repos,
-		Users:  NewUserService(repos.Users, hasher, tokenManager),
-		Events: NewEventService(repos.Events, cache),
+		repos:         repos,
+		Authorization: NewAuthService(repos.Authorization, hasher, tokenManager),
+		Users:         NewUserService(repos.Users),
 	}
 }

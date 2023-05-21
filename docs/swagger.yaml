@@ -1,4 +1,353 @@
+basePath: /api/v1/
+definitions:
+  v1.errorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  v1.refreshInput:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  v1.statusResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  v1.tokenResponse:
+    properties:
+      access_token:
+        type: string
+      expire_in:
+        type: integer
+      refresh_token:
+        type: string
+    type: object
+  v1.userProfileOutput:
+    properties:
+      avatar:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      middle_name:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      username:
+        type: string
+    type: object
+  v1.userSignInInput:
+    properties:
+      email:
+        maxLength: 64
+        type: string
+      name:
+        maxLength: 64
+        minLength: 2
+        type: string
+      password:
+        description: Phone    string `json:"phone" validate:"required,phone,max=13"`
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  v1.userSignUpInput:
+    properties:
+      email:
+        maxLength: 64
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      username:
+        maxLength: 64
+        minLength: 4
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost:8000
 info:
   contact: {}
-paths: {}
+  description: REST API for EduTour-AuthService
+  title: EduTour-AuthService API
+  version: "1.0"
+paths:
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: user check access token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: User check token
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: user refresh token
+      parameters:
+      - description: refresh token input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v1.refreshInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.tokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: Refresh Token
+      tags:
+      - auth
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: user sign in
+      parameters:
+      - description: sign in info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v1.userSignInInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.tokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: User SignIn
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: create user account
+      parameters:
+      - description: sign up info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v1.userSignUpInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: User SignUp
+      tags:
+      - auth
+  /auth/verify:
+    get:
+      consumes:
+      - application/json
+      description: verify token for other apps
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Verify token for other apps
+      tags:
+      - backend
+  /users/profile/:
+    get:
+      consumes:
+      - application/json
+      description: get user profile
+      parameters:
+      - description: username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.userProfileOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: Get Profile
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: update user profile
+      parameters:
+      - description: username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update Profile
+      tags:
+      - users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
