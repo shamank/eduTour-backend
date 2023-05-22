@@ -70,6 +70,7 @@ func (h *Handler) getUserProfile(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param username path string true "username"
+// @Param input body userProfileInput true "update form"
 // @Security ApiKeyAuth
 // @Success 200 {object} statusResponse
 // @Failure 400,404 {object} errorResponse

@@ -26,6 +26,17 @@ definitions:
       refresh_token:
         type: string
     type: object
+  v1.userProfileInput:
+    properties:
+      avatar:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      middle_name:
+        type: string
+    type: object
   v1.userProfileOutput:
     properties:
       avatar:
@@ -313,6 +324,12 @@ paths:
         name: username
         required: true
         type: string
+      - description: update form
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v1.userProfileInput'
       produces:
       - application/json
       responses:

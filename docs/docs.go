@@ -373,6 +373,15 @@ const docTemplate = `{
                         "name": "username",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "update form",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.userProfileInput"
+                        }
                     }
                 ],
                 "responses": {
@@ -448,6 +457,23 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.userProfileInput": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "middle_name": {
                     "type": "string"
                 }
             }
