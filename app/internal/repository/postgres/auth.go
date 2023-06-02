@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/shamank/eduTour-backend/app/internal/domain"
 )
 
@@ -23,6 +24,11 @@ func (r *AuthRepo) Create(ctx context.Context, user domain.User) error {
 	q2 := `INSERT INTO USERS_ROLES (user_id, role_id) VALUES ($1, 0)`
 	tx, err := r.db.Begin()
 	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok {
+			if pgErr.Code == "23505" {
+				return domain.ErrUserAlreadyExists
+			}
+		}
 		return err
 	}
 	var id int

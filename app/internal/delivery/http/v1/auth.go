@@ -1,7 +1,9 @@
 package v1
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/shamank/eduTour-backend/app/internal/domain"
 	"github.com/shamank/eduTour-backend/app/internal/service"
 	"net/http"
 )
@@ -61,6 +63,9 @@ func (h *Handler) signUp(c *gin.Context) {
 		Email:    input.Email,
 		Password: input.Password,
 	}); err != nil {
+		if errors.Is(err, domain.ErrUserAlreadyExists) {
+			newErrorResponse(c, http.StatusBadRequest, err.Error())
+		}
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -75,7 +80,7 @@ func (h *Handler) signUp(c *gin.Context) {
 // @Produce  json
 // @Param input body userSignInInput true "sign in info"
 // @Success 200 {object} tokenResponse
-// @Failure 400,404 {object} errorResponse
+// @Failure 400,401,404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
 // @Router /auth/sign-in [post]
@@ -92,7 +97,12 @@ func (h *Handler) signIn(c *gin.Context) {
 		Email:    input.Email,
 		Password: input.Password,
 	})
+
 	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			newErrorResponse(c, http.StatusUnauthorized, err.Error())
+			return
+		}
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}

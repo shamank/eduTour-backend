@@ -163,6 +163,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/v1.errorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/v1.errorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
