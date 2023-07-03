@@ -10,6 +10,7 @@ import (
 type (
 	Config struct {
 		HTTP       HTTPConfig
+		SMTP       SMTPConfig
 		Postgres   PostgresConfig
 		AuthConfig AuthConfig
 	}
@@ -20,6 +21,13 @@ type (
 		ReadTimeOut        time.Duration
 		WriteTimeOut       time.Duration
 		MaxHeaderMegabytes int
+	}
+
+	SMTPConfig struct {
+		Host     string
+		Port     int
+		User     string
+		Passowrd string
 	}
 
 	PostgresConfig struct {
@@ -75,6 +83,12 @@ func Init(configDir string) (*Config, error) {
 			ReadTimeOut:        readTimeoutDuration,
 			WriteTimeOut:       writeTimeoutDuration,
 			MaxHeaderMegabytes: viper.GetInt("http.maxHeaderBytes"),
+		},
+		SMTP: SMTPConfig{
+			Host:     viper.GetString("smtp.host"),
+			Port:     viper.GetInt("smtp.port"),
+			User:     viper.GetString("smtp.user"),
+			Passowrd: os.Getenv("SMTP_PASSWORD"),
 		},
 		Postgres: PostgresConfig{
 			Host:     viper.GetString("pg.host"),

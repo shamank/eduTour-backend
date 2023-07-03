@@ -2,8 +2,6 @@ package postgres
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/shamank/eduTour-backend/app/internal/domain"
@@ -19,9 +17,9 @@ func NewAuthRepo(db *sqlx.DB) *AuthRepo {
 
 func (r *AuthRepo) Create(ctx context.Context, user domain.User) error {
 
-	q1 := `INSERT INTO USERS (username, email, password_hash) 
-			VALUES ($1, $2, $3) RETURNING id`
-	q2 := `INSERT INTO USERS_ROLES (user_id, role_id) VALUES ($1, 0)`
+	query := `INSERT INTO USERS (username, email, password_hash, confirm_token) 
+			VALUES ($1, $2, $3, $4) RETURNING id`
+
 	tx, err := r.db.Begin()
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok {
@@ -32,100 +30,77 @@ func (r *AuthRepo) Create(ctx context.Context, user domain.User) error {
 		return err
 	}
 	var id int
-	row := tx.QueryRow(q1, user.Username, user.Email, user.PasswordHash)
+	row := tx.QueryRow(query, user.Username, user.Email, user.PasswordHash, user.ConfirmToken)
 	if err := row.Scan(&id); err != nil {
 		tx.Rollback()
-		return err
-	}
-	if _, err := tx.Exec(q2, id); err != nil {
 		return err
 	}
 
 	return tx.Commit()
 }
 
+func (r *AuthRepo) ConfirmUser(ctx context.Context, confirmToken string) error {
+
+	query := `UPDATE USERS
+				SET is_confirm = true
+				WHERE confirm_token = $1`
+
+	_, err := r.db.Exec(query, confirmToken)
+
+	return err
+}
+
 func (r *AuthRepo) GetByCredentials(ctx context.Context, email string, passwordHash string) (domain.User, error) {
 	var user domain.User
 
-	query := `SELECT u.id, u.username, u.email, r.id, r.name
+	query := `SELECT u.id, u.username, u.email, u.role_id, r.name
 				FROM USERS u
-				INNER JOIN USERS_ROLES ur on u.id = ur.user_id
-				INNER JOIN ROLES r on r.id = ur.role_id
+				INNER JOIN ROLES r on u.role_id = r.id
 				WHERE u.email = $1 AND u.password_hash = $2`
 
-	//if err := r.db.Get(&user, query, email, passwordHash); err != nil {
-	//	return domain.User{}, err
-	//}
-	rows, err := r.db.Query(query, email, passwordHash)
-	if err != nil {
-		fmt.Printf("ERROR 1: %v", err)
-		return domain.User{}, err
-	}
+	err := r.db.QueryRow(query, email, passwordHash).Scan(&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Role.ID,
+		&user.Role.Name)
 
-	defer func() {
-		if rErr := rows.Close(); rErr != nil {
-			err = errors.Join(err, fmt.Errorf("error occured in closing row: %w", rErr))
-		}
-	}()
+	return user, err
+}
 
-	found := false
+func (r *AuthRepo) GetByUsername(ctx context.Context, username string, passwordHash string) (domain.User, error) {
+	var user domain.User
 
-	for rows.Next() {
-		found = true
-		var roles domain.UserRole
-		err := rows.Scan(
-			&user.ID,
-			&user.Username,
-			&user.Email,
-			&roles.ID,
-			&roles.Name,
-		)
-		if err != nil {
-			return domain.User{}, err
-		}
+	query := `SELECT u.id, u.username, u.email, u.role_id, r.name
+				FROM USERS u
+				INNER JOIN ROLES r on u.role_id = r.id
+				WHERE u.username = $1 AND u.password_hash = $2`
 
-		user.Roles = append(user.Roles, roles)
-	}
-	if !found {
-		return domain.User{}, domain.ErrUserNotFound
-	}
+	err := r.db.QueryRow(query, username, passwordHash).Scan(&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Role.ID,
+		&user.Role.Name)
 
-	return user, nil
+	return user, err
 }
 
 func (r *AuthRepo) GetByRefreshToken(ctx context.Context, refreshToken string) (domain.User, error) {
 	var user domain.User
 	var tokenID int
-	query := `SELECT u.id, u.username, u.email, r.id, r.name, t.id
+	query := `SELECT u.id, u.username, u.email, u.role_id, r.name, t.id
 				FROM USERS u
-				INNER JOIN USERS_ROLES ur on u.id = ur.user_id
-				INNER JOIN ROLES r on r.id = ur.role_id
+				INNER JOIN ROLES r on r.id = u.role_id
 				INNER JOIN REFRESH_TOKENS t on t.user_id = u.id
 				WHERE t.refresh_token = $1 AND t.expire_at > CURRENT_TIMESTAMP AND NOT t.black_list`
 
-	rows, err := r.db.Query(query, refreshToken)
+	err := r.db.QueryRow(query, refreshToken).Scan(&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Role.ID,
+		&user.Role.Name,
+		&tokenID)
 	if err != nil {
 		return domain.User{}, err
-	}
-	defer rows.Close()
-
-	found := false
-	for rows.Next() {
-		found = true
-		var userRole domain.UserRole
-		if err := rows.Scan(
-			&user.ID,
-			&user.Username,
-			&user.Email,
-			&userRole.ID,
-			&userRole.Name,
-			&tokenID); err != nil {
-			return domain.User{}, err
-		}
-		user.Roles = append(user.Roles, userRole)
-	}
-	if !found {
-		return domain.User{}, domain.ErrUserNotFound
 	}
 
 	query2 := `UPDATE REFRESH_TOKENS
@@ -160,40 +135,21 @@ func (r *AuthRepo) GetFullUserInfo(ctx context.Context, userID int) (domain.User
        COALESCE(u.last_name, '') as last_name, COALESCE(u.middle_name, '') as middle_name,
 				u.created_at, r.id, r.name
 				FROM USERS u
-				INNER JOIN users_roles ur on u.id = ur.user_id
-				INNER JOIN roles r on r.id = ur.role_id
+				INNER JOIN roles r on r.id = u.role_id
 				WHERE u.id = $1`
-	rows, err := r.db.Query(query, userID)
+	err := r.db.QueryRow(query, userID).Scan(&u.ID,
+		&u.Username,
+		&u.Email,
+		&u.Phone,
+		&u.Avatar,
+		&u.FirstName,
+		&u.LastName,
+		&u.MiddleName,
+		&u.CreatedAt,
+		&u.Role.ID,
+		&u.Role.Name)
 	if err != nil {
 		return domain.User{}, err
 	}
-	defer rows.Close()
-
-	found := false
-
-	for rows.Next() {
-		found = true
-		var role domain.UserRole
-		if err := rows.Scan(
-			&u.ID,
-			&u.Username,
-			&u.Email,
-			&u.Phone,
-			&u.Avatar,
-			&u.FirstName,
-			&u.LastName,
-			&u.MiddleName,
-			&u.CreatedAt,
-			&role.ID,
-			&role.Name); err != nil {
-			return domain.User{}, err
-		}
-		u.Roles = append(u.Roles, role)
-	}
-
-	if !found {
-		return domain.User{}, domain.ErrUserNotFound
-	}
-
 	return u, nil
 }

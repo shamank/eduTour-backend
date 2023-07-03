@@ -15,7 +15,12 @@ type RefreshToken struct {
 type Authorization interface {
 	Create(ctx context.Context, user domain.User) error
 	GetByCredentials(ctx context.Context, email string, passwordHash string) (domain.User, error)
+	GetByUsername(ctx context.Context, username string, passwordHash string) (domain.User, error)
+
+	ConfirmUser(ctx context.Context, confirmToken string) error
+
 	GetByRefreshToken(ctx context.Context, refreshToken string) (domain.User, error)
+
 	SetRefreshToken(ctx context.Context, userID int, refreshInput domain.RefreshTokenInput) error
 	Verify(ctx context.Context, userID int) error
 	GetFullUserInfo(ctx context.Context, userID int) (domain.User, error)

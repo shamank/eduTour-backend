@@ -5,20 +5,24 @@ import (
 	"github.com/shamank/eduTour-backend/app/internal/domain"
 	"github.com/shamank/eduTour-backend/app/internal/repository"
 	"github.com/shamank/eduTour-backend/app/pkg/auth"
+	"github.com/shamank/eduTour-backend/app/pkg/email"
 	"github.com/shamank/eduTour-backend/app/pkg/hash"
+	"net/mail"
 )
 
 type AuthService struct {
 	repo         repository.Authorization
 	hasher       hash.PasswordHasher
 	tokenManager auth.TokenManager
+	emailManager *email.EmailManager
 }
 
-func NewAuthService(repo repository.Authorization, hasher hash.PasswordHasher, tokenManager auth.TokenManager) *AuthService {
+func NewAuthService(repo repository.Authorization, hasher hash.PasswordHasher, tokenManager auth.TokenManager, emailManager *email.EmailManager) *AuthService {
 	return &AuthService{
 		repo:         repo,
 		hasher:       hasher,
 		tokenManager: tokenManager,
+		emailManager: emailManager,
 	}
 }
 
@@ -27,40 +31,65 @@ func (s *AuthService) SignUp(ctx context.Context, input UserSignUpInput) error {
 	if err != nil {
 		return err
 	}
+	confirmToken, err := s.tokenManager.GenerateToken(32)
+	if err != nil {
+		return err
+	}
 
 	user := domain.User{
 		Username:     input.UserName,
 		Email:        input.Email,
 		PasswordHash: passwordHash,
+		ConfirmToken: confirmToken,
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {
 		return err
 	}
 
+	err = s.emailManager.SendMail([]string{input.Email}, "Password confirm", "Confirm token: "+confirmToken)
+
+	// TODO: сделать обработку ошибки
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
+
 func (s *AuthService) SignIn(ctx context.Context, input UserSignInInput) (Tokens, error) {
 	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
 		return Tokens{}, err
 	}
 
-	user, err := s.repo.GetByCredentials(ctx, input.Email, passwordHash)
+	var user domain.User
+
+	_, err = mail.ParseAddress(input.Login)
 	if err != nil {
-		return Tokens{}, err
+		user, err = s.repo.GetByUsername(ctx, input.Login, passwordHash)
+		if err != nil {
+			return Tokens{}, err
+		}
+	} else {
+		user, err = s.repo.GetByCredentials(ctx, input.Login, passwordHash)
+		if err != nil {
+			return Tokens{}, err
+		}
 	}
 
-	//сделать сохранение рефреш токена в бд
-
-	userRoles := make([]string, 0)
-
-	for _, role := range user.Roles {
-		userRoles = append(userRoles, role.Name)
-	}
-
-	return s.setRefreshToken(ctx, user.ID, user.Username, userRoles)
+	return s.setRefreshToken(ctx, user.ID, user.Username, user.Role.Name)
 }
+
+func (s *AuthService) ConfirmUser(ctx context.Context, confirmToken string) error {
+
+	if err := s.repo.ConfirmUser(ctx, confirmToken); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (Tokens, error) {
 
 	user, err := s.repo.GetByRefreshToken(ctx, refreshToken)
@@ -68,22 +97,16 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (To
 		return Tokens{}, err
 	}
 
-	userRoles := make([]string, 0)
-
-	for _, role := range user.Roles {
-		userRoles = append(userRoles, role.Name)
-	}
-
-	return s.setRefreshToken(ctx, user.ID, user.Username, userRoles)
+	return s.setRefreshToken(ctx, user.ID, user.Username, user.Role.Name)
 }
 
 func (s *AuthService) Verify(ctx context.Context, userID int, hash string) error {
 	return nil
 }
 
-func (s *AuthService) setRefreshToken(ctx context.Context, userID int, userName string, userRoles []string) (Tokens, error) {
+func (s *AuthService) setRefreshToken(ctx context.Context, userID int, userName string, userRole string) (Tokens, error) {
 
-	accessToken, expireIn, err := s.tokenManager.Generate(userID, userName, userRoles)
+	accessToken, expireIn, err := s.tokenManager.Generate(userID, userName, userRole)
 	if err != nil {
 		return Tokens{}, err
 	}

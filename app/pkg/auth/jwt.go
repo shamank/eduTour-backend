@@ -12,13 +12,14 @@ import (
 type userClaims struct {
 	UserID   int
 	UserName string
-	Roles    []string
+	Role     string
 	ExpireAt int64
 }
 
 type TokenManager interface {
-	Generate(userID int, userName string, roles []string) (string, time.Duration, error)
+	Generate(userID int, userName string, role string) (string, time.Duration, error)
 	Parse(token string) (userClaims, error)
+	GenerateToken(byteSize int) (string, error)
 	GenerateRefreshToken() (string, int64, error)
 }
 
@@ -40,12 +41,12 @@ func NewManager(signedKey string, accessTokenTTL time.Duration, refreshTokenTTL 
 	}, nil
 }
 
-func (m *Manager) Generate(userID int, userName string, roles []string) (string, time.Duration, error) {
+func (m *Manager) Generate(userID int, userName string, role string) (string, time.Duration, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id":    userID,
-		"user_roles": roles,
-		"user_name":  userName,
-		"expire_at":  time.Now().Add(m.accessTokenTTL).Unix(),
+		"user_id":   userID,
+		"user_role": role,
+		"user_name": userName,
+		"expire_at": time.Now().Add(m.accessTokenTTL).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(m.signedKey))
 
@@ -69,17 +70,10 @@ func (m *Manager) Parse(tokenString string) (userClaims, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		roles := make([]string, len(claims["user_roles"].([]interface{})))
-		for i, v := range claims["user_roles"].([]interface{}) {
-			roles[i], ok = v.(string)
-			if !ok {
-				return userClaims{}, errors.New("error occurred parsing claims (user roles)")
-			}
-		}
 		return userClaims{
 			UserID:   int(claims["user_id"].(float64)),
 			UserName: claims["user_name"].(string),
-			Roles:    roles,
+			Role:     claims["user_role"].(string),
 			ExpireAt: int64(claims["expire_at"].(float64)),
 		}, nil
 	}
@@ -87,15 +81,23 @@ func (m *Manager) Parse(tokenString string) (userClaims, error) {
 
 }
 
-func (m *Manager) GenerateRefreshToken() (string, int64, error) {
-	bytes := make([]byte, 32)
+func (m *Manager) GenerateToken(byteSize int) (string, error) {
+	bytes := make([]byte, byteSize)
 	_, err := rand.Read(bytes)
 	if err != nil {
-		return "", 0, err
+		return "", err
 	}
 
 	// Кодируем байты в строку
-	token := base64.StdEncoding.EncodeToString(bytes)
+	token := base64.RawStdEncoding.EncodeToString(bytes)
+	return token, nil
+}
+
+func (m *Manager) GenerateRefreshToken() (string, int64, error) {
+	token, err := m.GenerateToken(32)
+	if err != nil {
+		return "", 0, err
+	}
 	expireAt := time.Now().Add(m.refreshTokenTTL).Unix()
 	return token, expireAt, nil
 }

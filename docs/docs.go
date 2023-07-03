@@ -16,6 +16,70 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/confirm": {
+            "post": {
+                "description": "user confirm email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "User Confirm",
+                "parameters": [
+                    {
+                        "description": "confirm info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.confirmUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/v1.statusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/v1.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/v1.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/v1.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/v1.errorResponse"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/v1.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/me": {
             "get": {
                 "security": [
@@ -300,7 +364,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/profile/": {
+        "/users/profile/{user_name}": {
             "get": {
                 "description": "get user profile",
                 "consumes": [
@@ -316,8 +380,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "username",
-                        "name": "username",
+                        "description": "user_name",
+                        "name": "user_name",
                         "in": "path",
                         "required": true
                     }
@@ -375,8 +439,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "username",
-                        "name": "username",
+                        "description": "user_name",
+                        "name": "user_name",
                         "in": "path",
                         "required": true
                     },
@@ -426,6 +490,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "v1.confirmUserRequest": {
+            "type": "object",
+            "required": [
+                "confirm_token"
+            ],
+            "properties": {
+                "confirm_token": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.errorResponse": {
             "type": "object",
             "properties": {
@@ -499,11 +574,8 @@ const docTemplate = `{
                 "middle_name": {
                     "type": "string"
                 },
-                "roles": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "role": {
+                    "type": "string"
                 },
                 "username": {
                     "type": "string"
@@ -513,17 +585,15 @@ const docTemplate = `{
         "v1.userSignInInput": {
             "type": "object",
             "required": [
-                "email",
+                "login",
                 "password"
             ],
             "properties": {
-                "email": {
-                    "description": "UserName string ` + "`" + `json:\"username\" validate:\"required,min=2,max=64\"` + "`" + `",
-                    "type": "string",
-                    "maxLength": 64
+                "login": {
+                    "type": "string"
                 },
                 "password": {
-                    "description": "Phone    string ` + "`" + `json:\"phone\" validate:\"required,phone,max=13\"` + "`" + `",
+                    "description": "UserName string ` + "`" + `json:\"username\" validate:\"required,min=2,max=64\"` + "`" + `\nEmail string ` + "`" + `json:\"email\" binding:\"required,email,max=64\"` + "`" + `\nPhone    string ` + "`" + `json:\"phone\" validate:\"required,phone,max=13\"` + "`" + `",
                     "type": "string",
                     "maxLength": 64,
                     "minLength": 8
@@ -571,7 +641,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "92.255.78.139:8000",
+	Host:             "188.243.187.57:8000",
 	BasePath:         "/api/v1/",
 	Schemes:          []string{},
 	Title:            "EduTour-AuthService API",

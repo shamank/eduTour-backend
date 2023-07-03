@@ -5,6 +5,12 @@ http:
   readTimeout: 10s
   writeTimeout: 10s
 
+smtp:
+  host: smtp.yandex.ru
+  port: 587
+  user: rusya-mald@yandex.ru
+
+
 cache:
   ttl: 60s
 

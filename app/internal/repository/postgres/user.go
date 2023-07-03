@@ -26,31 +26,20 @@ func (r *UserRepo) GetUserProfile(ctx context.Context, userName string) (domain.
        COALESCE(u.last_name, '') as last_name, COALESCE(u.middle_name, '') as middle_name,
        COALESCE(u.avatar, '') as avatar, r.id, r.name
 				FROM users u
-				INNER JOIN users_roles ur on u.id = ur.user_id
-				INNER JOIN roles r on r.id = ur.role_id
+				INNER JOIN roles r on r.id = u.role_id
 				WHERE u.username = $1`
 
-	rows, err := r.db.Query(query, userName)
+	err := r.db.QueryRow(query, userName).Scan(
+		&user.Username,
+		&user.FirstName,
+		&user.LastName,
+		&user.MiddleName,
+		&user.Avatar,
+		&user.Role.ID,
+		&user.Role.Name)
+
 	if err != nil {
 		return domain.User{}, err
-	}
-	defer rows.Close()
-
-	found := false
-
-	for rows.Next() {
-		found = true
-		var role domain.UserRole
-
-		err := rows.Scan(&user.Username, &user.FirstName, &user.LastName, &user.MiddleName, &user.Avatar, &role.ID, &role.Name)
-		if err != nil {
-			return domain.User{}, err
-		}
-		user.Roles = append(user.Roles, role)
-	}
-
-	if !found {
-		return domain.User{}, domain.ErrUserNotFound
 	}
 
 	return user, nil

@@ -15,8 +15,9 @@ type userSignUpInput struct {
 }
 
 type userSignInInput struct {
+	Login string `json:"login" validate:"required"`
 	//UserName string `json:"username" validate:"required,min=2,max=64"`
-	Email string `json:"email" binding:"required,email,max=64"`
+	//Email string `json:"email" binding:"required,email,max=64"`
 	//Phone    string `json:"phone" validate:"required,phone,max=13"`
 	Password string `json:"password" binding:"required,min=8,max=64"`
 }
@@ -32,6 +33,7 @@ func (h *Handler) initAuthRouter(api *gin.RouterGroup) {
 	{
 		auth.POST("/sign-up", h.signUp)
 		auth.POST("/sign-in", h.signIn)
+		auth.POST("/confirm", h.confirmUser)
 
 		auth.POST("/refresh", h.userRefresh)
 
@@ -94,7 +96,7 @@ func (h *Handler) signIn(c *gin.Context) {
 	}
 
 	res, err := h.services.Authorization.SignIn(c.Request.Context(), service.UserSignInInput{
-		Email:    input.Email,
+		Login:    input.Login,
 		Password: input.Password,
 	})
 
@@ -112,6 +114,41 @@ func (h *Handler) signIn(c *gin.Context) {
 		RefreshToken: res.RefreshToken,
 		ExpireIn:     int(res.ExpireIn.Seconds()),
 	})
+}
+
+type confirmUserRequest struct {
+	ConfirmToken string `json:"confirm_token" validate:"required"`
+}
+
+// @Summary User Confirm
+// @Tags auth
+// @Description user confirm email
+// @ModuleID authConfirmUser
+// @Accept  json
+// @Produce  json
+// @Param input body confirmUserRequest true "confirm info"
+// @Success 200 {object} statusResponse
+// @Failure 400,401,404 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Failure default {object} errorResponse
+// @Router /auth/confirm [post]
+func (h *Handler) confirmUser(c *gin.Context) {
+
+	var input confirmUserRequest
+
+	if err := c.BindJSON(&input); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.services.Authorization.ConfirmUser(c.Request.Context(), input.ConfirmToken); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, statusResponse{Status: "ok"})
+
+	return
 }
 
 type refreshInput struct {

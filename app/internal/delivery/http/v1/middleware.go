@@ -19,7 +19,7 @@ const (
 type userContext struct {
 	userID   int
 	userName string
-	Roles    []string
+	Role     string
 }
 
 func (h *Handler) parseAuthHeader(c *gin.Context) (userContext, error) {
@@ -48,7 +48,7 @@ func (h *Handler) parseAuthHeader(c *gin.Context) (userContext, error) {
 	return userContext{
 		userID:   res.UserID,
 		userName: res.UserName,
-		Roles:    res.Roles,
+		Role:     res.Role,
 	}, nil
 }
 
@@ -62,20 +62,17 @@ func (h *Handler) userIdentity(c *gin.Context) {
 }
 
 func (h *Handler) adminOnly(c *gin.Context) {
-	if roles, ok := c.Get(roleCtx); !ok {
+	role, ok := c.Get(roleCtx)
+	if !ok {
 		newErrorResponse(c, http.StatusForbidden, "you are not login")
 		return
-	} else {
-		flag := false
-		for _, role := range roles.([]string) {
-			if role == adminRole {
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			newErrorResponse(c, http.StatusForbidden, "you are not admin")
-			return
-		}
 	}
+
+	if role != adminRole {
+		newErrorResponse(c, http.StatusForbidden, "you are not admin")
+		return
+	}
+
+	return
+
 }

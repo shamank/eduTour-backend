@@ -11,6 +11,7 @@ import (
 	"github.com/shamank/eduTour-backend/app/internal/repository"
 	"github.com/shamank/eduTour-backend/app/internal/service"
 	"github.com/shamank/eduTour-backend/app/pkg/auth"
+	"github.com/shamank/eduTour-backend/app/pkg/email"
 	"github.com/shamank/eduTour-backend/app/pkg/hash"
 	"github.com/shamank/eduTour-backend/app/server"
 	"github.com/sirupsen/logrus"
@@ -25,7 +26,7 @@ import (
 // @version 1.0
 // @description REST API for EduTour-AuthService
 
-// @host 92.255.78.139:8000
+// @host 188.243.187.57:8000
 // @BasePath /api/v1/
 
 // @securityDefinitions.apikey ApiKeyAuth
@@ -58,9 +59,20 @@ func Run(configDir string) {
 	if err != nil {
 		log.Fatalf("error occured generate tokenManager: %s", err.Error())
 	}
-	hasher := hash.NewSHA1Hasher(cfg.AuthConfig.PasswordSalt)
 
-	services := service.NewServices(repos, memcache, hasher, tokenManager)
+	SMTP := email.NewSMTPServer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.User, cfg.SMTP.Passowrd)
+	emailManager := email.NewEmailManager(SMTP, cfg.SMTP.User)
+
+	hasher := hash.NewSHA256Hasher(cfg.AuthConfig.PasswordSalt)
+
+	deps := service.Dependencies{
+		Cache:        memcache,
+		Hasher:       hasher,
+		TokenManager: tokenManager,
+		EmailManager: emailManager,
+	}
+
+	services := service.NewServices(repos, deps)
 
 	handlers := handler.NewHandler(services, tokenManager)
 

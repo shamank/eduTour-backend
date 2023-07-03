@@ -1,5 +1,12 @@
 basePath: /api/v1/
 definitions:
+  v1.confirmUserRequest:
+    properties:
+      confirm_token:
+        type: string
+    required:
+    - confirm_token
+    type: object
   v1.errorResponse:
     properties:
       message:
@@ -47,26 +54,25 @@ definitions:
         type: string
       middle_name:
         type: string
-      roles:
-        items:
-          type: string
-        type: array
+      role:
+        type: string
       username:
         type: string
     type: object
   v1.userSignInInput:
     properties:
-      email:
-        description: UserName string `json:"username" validate:"required,min=2,max=64"`
-        maxLength: 64
+      login:
         type: string
       password:
-        description: Phone    string `json:"phone" validate:"required,phone,max=13"`
+        description: |-
+          UserName string `json:"username" validate:"required,min=2,max=64"`
+          Email string `json:"email" binding:"required,email,max=64"`
+          Phone    string `json:"phone" validate:"required,phone,max=13"`
         maxLength: 64
         minLength: 8
         type: string
     required:
-    - email
+    - login
     - password
     type: object
   v1.userSignUpInput:
@@ -90,13 +96,55 @@ definitions:
 externalDocs:
   description: OpenAPI
   url: https://swagger.io/resources/open-api/
-host: 92.255.78.139:8000
+host: 188.243.187.57:8000
 info:
   contact: {}
   description: REST API for EduTour-AuthService
   title: EduTour-AuthService API
   version: "1.0"
 paths:
+  /auth/confirm:
+    post:
+      consumes:
+      - application/json
+      description: user confirm email
+      parameters:
+      - description: confirm info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v1.confirmUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: User Confirm
+      tags:
+      - auth
   /auth/me:
     get:
       consumes:
@@ -281,15 +329,15 @@ paths:
       summary: Verify token for other apps
       tags:
       - backend
-  /users/profile/:
+  /users/profile/{user_name}:
     get:
       consumes:
       - application/json
       description: get user profile
       parameters:
-      - description: username
+      - description: user_name
         in: path
-        name: username
+        name: user_name
         required: true
         type: string
       produces:
@@ -323,9 +371,9 @@ paths:
       - application/json
       description: update user profile
       parameters:
-      - description: username
+      - description: user_name
         in: path
-        name: username
+        name: user_name
         required: true
         type: string
       - description: update form

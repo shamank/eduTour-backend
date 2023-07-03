@@ -5,24 +5,27 @@ import "time"
 type User struct {
 	ID int
 
-	Username     string `json:"username"`
-	Email        string `json:"email"`
-	PasswordHash string `json:"password_hash"`
-	Phone        string `json:"phone"`
+	Username     string `json,db:"username"`
+	Email        string `json,db:"email"`
+	PasswordHash string `json,db:"password_hash"`
+	Phone        string `json,db:"phone"`
 
 	Avatar string `json:"avatar"`
 
-	FirstName  string `json:"first_name"`
-	LastName   string `json:"last_name"`
-	MiddleName string `json:"middle_name"`
+	FirstName  string `json,db:"first_name"`
+	LastName   string `json,db:"last_name"`
+	MiddleName string `json,db:"middle_name"`
 
-	CreatedAt time.Time `json:"created_at"`
-	//LastVisitAt time.Time
+	ConfirmToken string `json,db:"confirm_token"`
+	IsConfirm    bool   `json,db:"is_confirm"`
 
-	Roles []UserRole `json:"roles"`
+	CreatedAt time.Time `json,db:"created_at"`
+	UpdateAt  time.Time `json,db:"update_at"`
+
+	Role UserRole `json,db:"role"`
 }
 
 type UserRole struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID   int    `json,db:"id"`
+	Name string `json,db:"name"`
 }

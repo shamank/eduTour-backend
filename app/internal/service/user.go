@@ -23,18 +23,12 @@ func (s *UserService) GetUserProfile(ctx context.Context, userName string) (User
 		return UserProfile{}, err
 	}
 
-	userRoles := make([]string, 0)
-
-	for _, role := range res.Roles {
-		userRoles = append(userRoles, role.Name)
-	}
-
 	return UserProfile{
 		FirstName:  res.FirstName,
 		LastName:   res.LastName,
 		MiddleName: res.MiddleName,
 		Avatar:     res.Avatar,
-		Roles:      userRoles,
+		Role:       res.Role.Name,
 	}, nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/shamank/eduTour-backend/app/internal/domain"
 	"github.com/shamank/eduTour-backend/app/internal/repository"
 	"github.com/shamank/eduTour-backend/app/pkg/auth"
+	"github.com/shamank/eduTour-backend/app/pkg/email"
 	"github.com/shamank/eduTour-backend/app/pkg/hash"
 	"time"
 )
@@ -18,7 +19,7 @@ type UserSignUpInput struct {
 }
 
 type UserSignInInput struct {
-	Email    string
+	Login    string
 	Password string
 }
 
@@ -34,15 +35,18 @@ type UserProfile struct {
 	LastName   string
 	MiddleName string
 	Avatar     string
-	Roles      []string
+	Role       string
 }
 
 type Authorization interface {
 	SignUp(ctx context.Context, input UserSignUpInput) error
 	SignIn(ctx context.Context, input UserSignInInput) (Tokens, error)
+	ConfirmUser(ctx context.Context, confirmToken string) error
+
 	RefreshToken(ctx context.Context, refreshToken string) (Tokens, error)
 	Verify(ctx context.Context, userID int, hash string) error
-	setRefreshToken(ctx context.Context, userID int, userName string, userRoles []string) (Tokens, error)
+
+	setRefreshToken(ctx context.Context, userID int, userName string, userRole string) (Tokens, error)
 	GetFullUserInfo(ctx context.Context, userID int) (domain.User, error)
 }
 
@@ -64,11 +68,18 @@ type Services struct {
 	Users         Users
 }
 
-func NewServices(repos *repository.Repository, cache *cache.Cache, hasher hash.PasswordHasher, tokenManager auth.TokenManager) *Services {
+type Dependencies struct {
+	Cache        *cache.Cache
+	Hasher       hash.PasswordHasher
+	TokenManager auth.TokenManager
+	EmailManager *email.EmailManager
+}
+
+func NewServices(repos *repository.Repository, dependencies Dependencies) *Services {
 
 	return &Services{
 		repos:         repos,
-		Authorization: NewAuthService(repos.Authorization, hasher, tokenManager),
+		Authorization: NewAuthService(repos.Authorization, dependencies.Hasher, dependencies.TokenManager, dependencies.EmailManager),
 		Users:         NewUserService(repos.Users),
 	}
 }

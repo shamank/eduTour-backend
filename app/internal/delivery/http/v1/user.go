@@ -7,12 +7,12 @@ import (
 )
 
 type userProfileOutput struct {
-	UserName   string   `json:"username"`
-	FirstName  string   `json:"first_name"`
-	LastName   string   `json:"last_name"`
-	MiddleName string   `json:"middle_name"`
-	Avatar     string   `json:"avatar"`
-	Roles      []string `json:"roles"`
+	UserName   string `json:"username"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	MiddleName string `json:"middle_name"`
+	Avatar     string `json:"avatar"`
+	Role       string `json:"role"`
 }
 
 type userProfileInput struct {
@@ -36,12 +36,12 @@ func (h *Handler) initUsersRouter(api *gin.RouterGroup) {
 // @ModuleID userGetProfile
 // @Accept  json
 // @Produce  json
-// @Param username path string true "username"
+// @Param user_name path string true "user_name"
 // @Success 200 {object} userProfileOutput
 // @Failure 400,404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
-// @Router /users/profile/ [get]
+// @Router /users/profile/{user_name} [get]
 func (h *Handler) getUserProfile(c *gin.Context) {
 
 	userName := c.Param("user_name")
@@ -58,7 +58,7 @@ func (h *Handler) getUserProfile(c *gin.Context) {
 		LastName:   res.LastName,
 		MiddleName: res.MiddleName,
 		Avatar:     res.Avatar,
-		Roles:      res.Roles,
+		Role:       res.Role,
 	})
 
 }
@@ -69,14 +69,14 @@ func (h *Handler) getUserProfile(c *gin.Context) {
 // @ModuleID userUpdateProfile
 // @Accept  json
 // @Produce  json
-// @Param username path string true "username"
+// @Param user_name path string true "user_name"
 // @Param input body userProfileInput true "update form"
 // @Security ApiKeyAuth
 // @Success 200 {object} statusResponse
 // @Failure 400,404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
-// @Router /users/profile/ [put]
+// @Router /users/profile/{user_name} [put]
 func (h *Handler) updateUserProfile(c *gin.Context) {
 	var input userProfileInput
 
@@ -88,13 +88,7 @@ func (h *Handler) updateUserProfile(c *gin.Context) {
 		return
 	}
 
-	IsAdmin := false
-	for _, role := range usr.Roles {
-		if role == adminRole {
-			IsAdmin = true
-			break
-		}
-	}
+	IsAdmin := usr.Role == adminRole
 
 	if usr.userName != userName && !IsAdmin {
 		newErrorResponse(c, http.StatusForbidden, "permission denied")
