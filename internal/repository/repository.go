@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"github.com/jmoiron/sqlx"
-	"github.com/shamank/eduTour-backend/app/internal/domain"
-	"github.com/shamank/eduTour-backend/app/internal/repository/postgres"
+	"github.com/shamank/eduTour-backend/internal/domain"
+	"github.com/shamank/eduTour-backend/internal/repository/postgres"
 )
 
 type RefreshToken struct {

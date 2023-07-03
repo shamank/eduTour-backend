@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"github.com/patrickmn/go-cache"
-	"github.com/shamank/eduTour-backend/app/internal/domain"
-	"github.com/shamank/eduTour-backend/app/internal/repository"
-	"github.com/shamank/eduTour-backend/app/pkg/auth"
-	"github.com/shamank/eduTour-backend/app/pkg/email"
-	"github.com/shamank/eduTour-backend/app/pkg/hash"
+	"github.com/shamank/eduTour-backend/internal/domain"
+	"github.com/shamank/eduTour-backend/internal/repository"
+	"github.com/shamank/eduTour-backend/pkg/auth"
+	"github.com/shamank/eduTour-backend/pkg/email"
+	"github.com/shamank/eduTour-backend/pkg/hash"
 	"time"
 )
 

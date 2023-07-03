@@ -3,8 +3,8 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/shamank/eduTour-backend/app/internal/service"
-	"github.com/shamank/eduTour-backend/app/pkg/auth"
+	"github.com/shamank/eduTour-backend/internal/service"
+	"github.com/shamank/eduTour-backend/pkg/auth"
 )
 
 type Handler struct {

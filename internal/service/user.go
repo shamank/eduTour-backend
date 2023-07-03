@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"github.com/shamank/eduTour-backend/app/internal/domain"
-	"github.com/shamank/eduTour-backend/app/internal/repository"
+	"github.com/shamank/eduTour-backend/internal/domain"
+	"github.com/shamank/eduTour-backend/internal/repository"
 )
 
 type UserService struct {

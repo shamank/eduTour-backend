@@ -3,8 +3,8 @@ package v1
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/shamank/eduTour-backend/app/internal/domain"
-	"github.com/shamank/eduTour-backend/app/internal/service"
+	"github.com/shamank/eduTour-backend/internal/domain"
+	"github.com/shamank/eduTour-backend/internal/service"
 	"net/http"
 )
 

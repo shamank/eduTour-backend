@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	"github.com/shamank/eduTour-backend/app/internal/domain"
+	"github.com/shamank/eduTour-backend/internal/domain"
 	"strings"
 )
 

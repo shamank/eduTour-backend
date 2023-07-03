@@ -4,7 +4,7 @@ export $(shell sed 's/=.*//' .env)
 .SILENT:
 
 build:
-	go mod download && go build -o ./.bin/app ./app/cmd/main.go
+	go mod download && go build -o ./.bin/app ./cmd/main.go
 
 run: build
 	./.bin/app

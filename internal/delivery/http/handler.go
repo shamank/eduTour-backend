@@ -2,9 +2,9 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	v1 "github.com/shamank/eduTour-backend/app/internal/delivery/http/v1"
-	"github.com/shamank/eduTour-backend/app/internal/service"
-	"github.com/shamank/eduTour-backend/app/pkg/auth"
+	v1 "github.com/shamank/eduTour-backend/internal/delivery/http/v1"
+	"github.com/shamank/eduTour-backend/internal/service"
+	"github.com/shamank/eduTour-backend/pkg/auth"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
