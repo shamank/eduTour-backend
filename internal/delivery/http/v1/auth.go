@@ -188,6 +188,11 @@ func (h *Handler) userRefresh(c *gin.Context) {
 	})
 }
 
+type userPingResponse struct {
+	Status   string `json:"status"`
+	Username string `json:"username"`
+}
+
 // @Summary User check token
 // @Tags auth
 // @Description user check access token
@@ -195,18 +200,22 @@ func (h *Handler) userRefresh(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Security ApiKeyAuth
-// @Success 200 {object} statusResponse
-// @Failure 400,404 {object} errorResponse
+// @Success 200 {object} userPingResponse
+// @Failure 400,401,404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
 // @Router /auth/me [get]
 func (h *Handler) userPing(c *gin.Context) {
-	_, err := h.parseAuthHeader(c)
+	usrCtx, err := h.parseAuthHeader(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, statusResponse{"ok"})
+
+	c.JSON(http.StatusOK, userPingResponse{
+		Status:   "ok",
+		Username: usrCtx.userName,
+	})
 }
 
 // @Summary Verify token for other apps
@@ -217,7 +226,7 @@ func (h *Handler) userPing(c *gin.Context) {
 // @Produce  json
 // @Security ApiKeyAuth
 // @Success 200 {object} statusResponse
-// @Failure 400,404 {object} errorResponse
+// @Failure 400,401,404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
 // @Router /auth/verify [get]

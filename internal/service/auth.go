@@ -47,7 +47,10 @@ func (s *AuthService) SignUp(ctx context.Context, input UserSignUpInput) error {
 		return err
 	}
 
-	err = s.emailManager.SendMail([]string{input.Email}, "Password confirm", "Confirm token: "+confirmToken)
+	// TODO: сделать нормальную верстку
+	err = s.emailManager.SendMail([]string{input.Email},
+		"Password confirm",
+		"confirm email: http://localhost:3000/verifyemail/"+confirmToken)
 
 	// TODO: сделать обработку ошибки
 	if err != nil {

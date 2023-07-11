@@ -89,7 +89,7 @@ func (m *Manager) GenerateToken(byteSize int) (string, error) {
 	}
 
 	// Кодируем байты в строку
-	token := base64.RawStdEncoding.EncodeToString(bytes)
+	token := base64.RawURLEncoding.EncodeToString(bytes)
 	return token, nil
 }
 

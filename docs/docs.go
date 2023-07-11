@@ -102,11 +102,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/v1.statusResponse"
+                            "$ref": "#/definitions/v1.userPingResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/v1.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/v1.errorResponse"
                         }
@@ -343,6 +349,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/v1.errorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/v1.errorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -538,6 +550,17 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.userPingResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

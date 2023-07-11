@@ -33,6 +33,13 @@ definitions:
       refresh_token:
         type: string
     type: object
+  v1.userPingResponse:
+    properties:
+      status:
+        type: string
+      username:
+        type: string
+    type: object
   v1.userProfileInput:
     properties:
       avatar:
@@ -156,9 +163,13 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/v1.statusResponse'
+            $ref: '#/definitions/v1.userPingResponse'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/v1.errorResponse'
         "404":
@@ -310,6 +321,10 @@ paths:
             $ref: '#/definitions/v1.statusResponse'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/v1.errorResponse'
         "404":
